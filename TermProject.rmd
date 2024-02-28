@@ -1,0 +1,143 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+```{r #Load all Libraries}
+library(dplyr)
+library(tidyverse) 
+library(tidymodels)
+library(glmnet) 
+library(GGally) 
+library(ggcorrplot) 
+library(MASS)
+library(leaps) 
+library(lmtest) 
+library(splines) 
+library(car)
+library(lubridate)
+library(e1071)
+library(ROCR)
+library(readr)
+library(skimr)
+
+```
+
+```{r #Load all datasets}
+test <- read_csv("test.csv")
+train <- read_csv("train.csv")
+```
+```{r reduce dataset to vars and output}
+train_3 <- train %>%
+  dplyr::select(
+    "loading",
+    "product_code", 
+    "attribute_0", 
+    "attribute_1", 
+    "attribute_2",
+    "attribute_3",
+    "failure")
+```
+
+```{r convert to factors}
+train_3 <- train_3 %>% mutate(
+ failure = as_factor(failure),
+ )
+```
+
+
+```{r convert to factors continued}
+train_3 <- train_3 %>% mutate_if(is.character, as.factor)
+```
+
+```{r convert to factors continued 2}
+train_3 <- train_3 %>% mutate(
+  attribute_2 = as_factor(attribute_2),
+  attribute_3 = as_factor(attribute_3))
+```
+
+```{r drop NAs}
+train_3 <- na.omit(train_3)
+```
+
+```{r recode factors}
+train_3 <- train_3 %>% mutate(
+    attribute_0 = fct_recode(attribute_0, "M7" = "material_7", "M5" = "material_5"),
+    attribute_1 = fct_recode(attribute_1, "M5" = "material_5", "M6" = "material_6","M8" = "material_8"),
+    attribute_2 = fct_recode(attribute_2, "M5" = "5", "M6" = "6","M8" = "8","M9" = "9"),
+    attribute_3 = fct_recode(attribute_3, "M5" = "5", "M6" = "6","M8" = "8","M9" = "9"))
+```
+
+
+```{r sample data for smaller ggpairs + exploring}
+train3_sample <- train_3[sample(nrow(train_3), 100), ]
+```
+
+```{r filter only failures}
+train3_filtered <- train_3 %>%
+    filter(failure == "Yes")
+```
+
+
+```{r remove failure varaible for cleaner ggpair}
+train3_filteredDropFail <- train3_filtered %>%
+  dplyr::select(
+    "loading",
+    "product_code", 
+    "attribute_0", 
+    "attribute_1", 
+    "attribute_2",
+    "attribute_3")
+
+
+
+ggpairs(train3_filteredDropFail,)
+```
+
+```{r plot questionable variables independently}
+ggplot(data.frame(train3_filtered), aes(x=attribute_0)) +
+  ylab("Failures")+
+  geom_bar()
+
+ggplot(data.frame(train3_filtered), aes(x=attribute_1)) +
+  ylab("Failures")+
+  geom_bar()
+
+ggplot(data.frame(train3_filtered), aes(x=attribute_2)) +
+  ylab("Failures")+
+  geom_bar()
+
+ggplot(data.frame(train3_filtered), aes(x=attribute_3)) +
+  ylab("Failures")+
+  geom_bar()
+
+ggplot(train3_filtered, aes(loading, fill=product_code)) +
+  ylab("Failures")+
+  geom_histogram(binwidth=1
+                 )
+ggplot(train_3, aes(loading, fill=failure)) +
+  ylab("Failures")+
+  geom_histogram(binwidth=1
+                 )
+
+
+```
+
+
+```{r summarize all data}
+summary(train_3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
